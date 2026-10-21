@@ -1,0 +1,21 @@
+[project]
+name = "mcpwarden"
+version = "0.1.0"
+description = "Security scanner for Model Context Protocol (MCP) servers"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Apex Studio LLC" }]
+
+[project.scripts]
+mcpwarden = "mcpwarden.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
