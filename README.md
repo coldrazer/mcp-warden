@@ -2,10 +2,14 @@
 
 **A security scanner for Model Context Protocol (MCP) servers: seven AST rules, a scored report, and an interactive HTML dashboard.**
 
-![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![License: CC BY-NC 4.0](https://img.shields.io/badge/license-CC%20BY--NC%204.0-blue.svg)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Tests: 17 passing](https://img.shields.io/badge/tests-17%20passing-brightgreen.svg)
 ![Rules: 7](https://img.shields.io/badge/rules-7-red.svg)
+
+## Demo
+
+Watch the demo video: [MCP Warden demo on YouTube](https://www.youtube.com/watch?v=QVmYLDrbAVQ). It walks through the vulnerable fixture scan, the interactive dashboard, and the clean pass on the hardened fixture.
 
 ## Why it matters
 
@@ -167,4 +171,6 @@ unpkg CDN at view time and embeds the scan results as JSON. The pytest suite
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Copyright 2026 Christopher Guerrero and Apex Studio LLC.
+
+Licensed under CC BY-NC 4.0 (Creative Commons Attribution NonCommercial 4.0 International): noncommercial use with attribution is permitted, and commercial use is not. See [LICENSE](LICENSE) for the full legal text.
