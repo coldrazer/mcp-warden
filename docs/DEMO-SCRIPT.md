@@ -25,8 +25,8 @@ host validation, shell interpolation, and disabled TLS."
 Run: `mcpwarden scan examples/vuln_server.py`
 
 Read the terminal output aloud as it appears: "Score zero out of one
-hundred, grade F. Ten findings. One critical, six high, three medium.
-Every rule fired."
+hundred, grade F. Eleven findings. One critical, seven high, three
+medium. Every rule fired."
 
 ## Beat 3 — The dashboard (1:45 to 3:00)
 

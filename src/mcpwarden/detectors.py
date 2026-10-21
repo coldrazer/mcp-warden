@@ -38,6 +38,27 @@ def _uses_param(node, params):
     return False
 
 
+def _tainted_names(func, params):
+    """Parameters plus locals assigned from parameter derived values.
+
+    One pass in source order, so a handler that does ``url = CONFIG[name]``
+    and later fetches ``url`` is treated the same as using the parameter
+    or subscript directly at the call site.
+    """
+    tainted = set(params)
+    assigns = []
+    for node in ast.walk(func):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            assigns.append((node.targets[0].id, node.value, node.lineno, node.col_offset))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value is not None:
+            assigns.append((node.target.id, node.value, node.lineno, node.col_offset))
+    assigns.sort(key=lambda item: (item[2], item[3]))
+    for name, value, _line, _col in assigns:
+        if _uses_param(value, tainted):
+            tainted.add(name)
+    return tainted
+
+
 def _source_lines(source):
     return source.splitlines()
 
@@ -91,6 +112,7 @@ def detect_mw001(tree, source, filename):
         params = _func_params(node)
         if not params or _mw001_validated(node):
             continue
+        tainted = _tainted_names(node, params)
         for call in ast.walk(node):
             if not isinstance(call, ast.Call):
                 continue
@@ -98,7 +120,7 @@ def detect_mw001(tree, source, filename):
             if name not in _MW001_SINKS:
                 continue
             args = list(call.args) + [kw.value for kw in call.keywords]
-            if any(_uses_param(a, params) for a in args):
+            if any(_uses_param(a, tainted) for a in args):
                 out.append((
                     "MW001", call.lineno, call.col_offset,
                     "Tool parameter reaches a file operation with no path validation or root confinement",
@@ -198,6 +220,7 @@ def detect_mw003(tree, source, filename):
         params = _func_params(node)
         if _mw003_validated(node):
             continue
+        tainted_names = _tainted_names(node, params)
         for call in ast.walk(node):
             if not isinstance(call, ast.Call):
                 continue
@@ -209,7 +232,7 @@ def detect_mw003(tree, source, filename):
                     url_arg = kw.value
             if url_arg is None or isinstance(url_arg, ast.Constant):
                 continue
-            tainted = _uses_param(url_arg, params) or isinstance(url_arg, (ast.Subscript, ast.Attribute))
+            tainted = _uses_param(url_arg, tainted_names) or isinstance(url_arg, (ast.Subscript, ast.Attribute))
             if tainted:
                 out.append((
                     "MW003", call.lineno, call.col_offset,
@@ -309,8 +332,17 @@ def _mw006_interpolated(cmd, params):
     if isinstance(cmd, ast.Call) and _call_name(cmd).endswith("format"):
         return True
     if isinstance(cmd, ast.BinOp) and isinstance(cmd.op, (ast.Add, ast.Mod)):
-        return _uses_param(cmd, params) or not isinstance(cmd, ast.Constant)
+        # Concatenation counts only when a parameter (or a local derived
+        # from one) flows in. Joining pure literals is a fixed command.
+        return _uses_param(cmd, params)
     return False
+
+
+def _is_constant_expr(node):
+    """True when an expression is built only from literal constants."""
+    allowed = (ast.Constant, ast.BinOp, ast.UnaryOp, ast.Tuple, ast.List,
+               ast.Add, ast.Mod, ast.USub, ast.UAdd)
+    return all(isinstance(n, allowed) for n in ast.walk(node))
 
 
 def detect_mw006(tree, source, filename):
@@ -320,6 +352,7 @@ def detect_mw006(tree, source, filename):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         params = _func_params(node)
+        tainted = _tainted_names(node, params)
         for call in ast.walk(node):
             if not isinstance(call, ast.Call):
                 continue
@@ -336,8 +369,8 @@ def detect_mw006(tree, source, filename):
             )
             if cmd is None:
                 continue
-            interpolated = _mw006_interpolated(cmd, params)
-            literal_only = isinstance(cmd, ast.Constant)
+            interpolated = _mw006_interpolated(cmd, tainted)
+            literal_only = _is_constant_expr(cmd)
             if (shell and not literal_only) or interpolated or (name in ("os.system", "os.popen") and not literal_only):
                 out.append((
                     "MW006", call.lineno, call.col_offset,

@@ -49,7 +49,9 @@ mcpwarden scan path/to/server.py --probe        # local dynamic confirmation
 mcpwarden scan path/to/servers/                # scan a whole directory
 ```
 
-Exit code is 1 when findings exist, 0 when the target is clean.
+Exit code is 1 when findings exist, 0 when the target is clean, and 2
+when the target does not exist. Files that cannot be parsed are reported
+as skipped in the output, never silently counted as clean.
 
 The HTML dashboard is a single self contained file: React 18 plus htm render
 the embedded scan JSON with severity and rule filters, search, expandable
@@ -69,8 +71,8 @@ B 75+, C 60+, D 40+, F below 40.
 ```
 $ mcpwarden scan examples/vuln_server.py
 Score: 0/100  Grade: F
-Files scanned: 1   Tools detected: 7   Findings: 10
-By severity: critical: 1, high: 6, medium: 3
+Files scanned: 1   Tools detected: 7   Findings: 11
+By severity: critical: 1, high: 7, medium: 3
 ```
 
 `examples/safe_server.py` is the hardened equivalent:

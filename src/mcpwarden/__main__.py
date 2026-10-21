@@ -33,6 +33,9 @@ def build_parser():
 def main(argv=None):
     args = build_parser().parse_args(argv)
     if args.command == "scan":
+        if not Path(args.target).exists():
+            print("error: target not found: %s" % args.target, file=sys.stderr)
+            return 2
         result = scan_target(args.target)
         scored = score_result(result)
         if args.probe:

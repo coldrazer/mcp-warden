@@ -47,7 +47,7 @@ spawns the target over stdio, performs the MCP handshake, and fires
 traversal payloads at path like tools, aimed at a canary file the probe
 creates and deletes itself. Local fixtures only, never anything remote.
 
-On the bundled vulnerable fixture the scanner fires all seven rules, 10
+On the bundled vulnerable fixture the scanner fires all seven rules, 11
 findings, score 0/100 grade F, and probe mode confirms the traversal
 live. On the hardened fixture it reports zero findings, 100/100 grade A,
 with the dashboard rendering a clean pass state.

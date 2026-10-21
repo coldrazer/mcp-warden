@@ -37,6 +37,7 @@ def build_payload(result, scored):
         "deductions": scored["deductions"],
         "weights": scored["weights"],
         "files_scanned": result.files_scanned,
+        "files_skipped": result.skipped_files,
         "tools": result.tools,
         "by_severity": scored["by_severity"],
         "by_rule": by_rule,
@@ -56,6 +57,11 @@ def render_text(payload):
         "Files scanned: %d   Tools detected: %d   Findings: %d"
         % (len(payload["files_scanned"]), len(payload["tools"]), len(payload["findings"]))
     )
+    if payload.get("files_skipped"):
+        lines.append(
+            "Files skipped (unreadable or not valid Python): %d: %s"
+            % (len(payload["files_skipped"]), ", ".join(payload["files_skipped"]))
+        )
     if payload["by_severity"]:
         sev = ", ".join(
             "%s: %d" % (sev, payload["by_severity"].get(sev, 0))
@@ -68,7 +74,10 @@ def render_text(payload):
         lines.append("Probe: %s" % probe.get("status", "unknown"))
     if not payload["findings"]:
         lines.append("")
-        lines.append("No findings. All seven rules are clean.")
+        if payload.get("files_skipped"):
+            lines.append("No findings in the files that could be scanned. Some files were skipped; see above.")
+        else:
+            lines.append("No findings. All seven rules are clean.")
         return "\n".join(lines) + "\n"
     current_rule = None
     for finding in payload["findings"]:

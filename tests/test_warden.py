@@ -121,6 +121,46 @@ def test_render_text_lists_all_rules(tmp_path):
         assert rule["id"] in text
 
 
+def test_cli_missing_target_errors_cleanly():
+    proc = _run_cli(str(EXAMPLES / "does_not_exist.py"))
+    assert proc.returncode == 2
+    assert "target not found" in proc.stderr
+    assert "Traceback" not in proc.stderr
+
+
+def test_scan_skips_unparseable_and_directory_entries(tmp_path):
+    (tmp_path / "broken.py").write_text("def broken(:\n")
+    (tmp_path / "fake.py").mkdir()
+    good = tmp_path / "good.py"
+    good.write_text("x = 1\n")
+    result = scan_target(tmp_path)
+    assert result.files_scanned == [str(good)]
+    assert result.skipped_files == [str(tmp_path / "broken.py")]
+
+
+def test_config_reference_via_variable_fires_mw003(tmp_path):
+    src = tmp_path / "cfg.py"
+    src.write_text(
+        "from urllib.request import urlopen\n"
+        "CFG = {'a': 'http://internal.example/x'}\n"
+        "def tool_hook(name):\n"
+        "    url = CFG[name]\n"
+        "    return urlopen(url).status\n"
+    )
+    fired = {f.rule_id for f in scan_target(src).findings}
+    assert "MW003" in fired
+
+
+def test_literal_concatenation_is_not_mw006(tmp_path):
+    src = tmp_path / "lit.py"
+    src.write_text(
+        "import os\n"
+        "def tool_list(name):\n"
+        "    return os.system('ls ' + '-la')\n"
+    )
+    assert scan_target(src).findings == []
+
+
 def test_probe_confirms_traversal_on_vuln_fixture():
     from mcpwarden import probe
 

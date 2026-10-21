@@ -57,15 +57,17 @@ Each detector is a small AST visitor, deliberately narrow so the hardened
 fixture stays at zero findings:
 
 * **MW001** finds `open` / `Path` / `send_file` style sinks whose arguments
-  contain a handler parameter name, unless the same function calls
-  `is_relative_to`, `commonpath`, `realpath`/`resolve`, or tests the
-  parameter against an allowlist container.
+  contain a handler parameter name (or a local variable assigned from
+  one), unless the same function calls `is_relative_to`, `commonpath`,
+  `realpath`/`resolve`, or tests the parameter against an allowlist
+  container.
 * **MW002** finds `if token:` style truthiness gates that `return` data,
   where no call to a `verify*` / `authenticate*` / `validate*` function
   touches the token in the same handler.
 * **MW003** finds `requests` / `httpx` / `urlopen` calls whose URL argument
-  is a parameter, subscript, or attribute (config references count) rather
-  than a literal, unless the handler parses the URL and checks `hostname`.
+  is a parameter, subscript, or attribute (config references count), or a
+  local variable assigned from one of those, rather than a literal,
+  unless the handler parses the URL and checks `hostname`.
 * **MW004** finds `os.chdir`, `sys.path` mutation, and `os.environ` writes
   inside any function body.
 * **MW005** finds `==` comparisons against `.netloc`, and `in` tests of a
